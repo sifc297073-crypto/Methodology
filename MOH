@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>Global Humanities Quiz 연습</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 720px;
+      margin: 40px auto;
+      padding: 0 16px;
+      line-height: 1.5;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    #card {
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+      margin-top: 16px;
+      background: #ffffff;
+    }
+    #question-text {
+      font-size: 18px;
+      margin-bottom: 16px;
+    }
+    .option-btn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      margin-bottom: 8px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      background: #fff;
+      cursor: pointer;
+      font-size: 15px;
+    }
+    .option-btn:hover {
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .option-btn.disabled {
+      cursor: default;
+      opacity: 0.7;
+      box-shadow: none;
+    }
+    .option-btn.correct {
+      border-color: #22c55e;
+      background: #ecfdf3;
+      font-weight: 600;
+    }
+    .option-btn.wrong {
+      border-color: #ef4444;
+      background: #fef2f2;
+    }
+    #feedback {
+      margin-top: 10px;
+      min-height: 24px;
+      font-weight: 600;
+    }
+    #feedback.correct {
+      color: #16a34a;
+    }
+    #feedback.wrong {
+      color: #dc2626;
+    }
+    #controls {
+      margin-top: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    button.main-btn {
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    #next-btn {
+      background: #111827;
+      color: white;
+    }
+    #restart-btn {
+      background: #e5e7eb;
+    }
+    #progress {
+      font-size: 14px;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <h1>Global Humanities Quiz 연습</h1>
+  <p style="color:#6b7280;font-size:14px;">
+    Conrad, networks, global/microhistory, medievalism, nuclear, Protestant Empires, Sami Modiano 문제들을 모두 섞어서 랜덤으로 보여줍니다.
+  </p>
+
+  <div id="card">
+    <div id="question-text"></div>
+    <div id="options"></div>
+    <div id="feedback"></div>
+    <div id="controls">
+      <div id="progress"></div>
+      <div>
+        <button id="restart-btn" class="main-btn" style="display:none;">처음부터 다시</button>
+        <button id="next-btn" class="main-btn">다음 문제</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== 통합 문제은행 =====
+    // answer: 정답 보기의 인덱스 (0부터 시작)
+    const QUESTION_BANK = [
+      // ----- Self Assessment – Conrad’s Introduction -----
+      {
+        question: "What does the “history of connections” emphasize?",
+        options: [
+          "Exchange and interaction between societies",
+          "Theories of revolution",
+          "Events within one nation",
+          "Political institutions"
+        ],
+        answer: 0
+      },
+      {
+        question: "In Christopher Hill’s example, what linked France, the US, and Japan in the late 19th century?",
+        options: [
+          "Global transformations of capitalism and imperialism",
+          "Colonial expansion by each country",
+          "Similar climate conditions",
+          "Religious reforms"
+        ],
+        answer: 0
+      },
+      {
+        question: "Which of the following is not listed as a variety of global history?",
+        options: [
+          "History of connections",
+          "History of integration",
+          "History of everything",
+          "History of revolutions"
+        ],
+        answer: 3
+      },
+      {
+        question: "What is one of the “birth defects” of the modern social sciences?",
+        options: [
+          "Postcolonialism",
+          "Eurocentrism",
+          "Cultural relativism",
+          "Global integration"
+        ],
+        answer: 1
+      },
+      {
+        question: "According to C. A. Bayly, what has every historian become today?",
+        options: [
+          "A national historian",
+          "A world historian",
+          "A regional historian",
+          "A cultural anthropologist"
+        ],
+        answer: 1
+      },
+      {
+        question: "What historical event increased interest in global processes after the Cold War?",
+        options: [
+          "The Iraq War",
+          "The fall of the Berlin Wall",
+          "The attacks of September 11, 2001",
+          "The financial crisis of 2008"
+        ],
+        answer: 2
+      },
+      {
+        question: "What does “methodological nationalism” refer to?",
+        options: [
+          "The tendency to treat the nation-state as the main unit of analysis",
+          "Studying only political leaders",
+          "Ignoring national borders",
+          "Writing history without methodology"
+        ],
+        answer: 0
+      },
+      {
+        question: "What is one key insight about global history as a perspective?",
+        options: [
+          "It must always cover the whole planet",
+          "It studies only modern events",
+          "It replaces national history entirely",
+          "It can be applied to limited areas aware of global contexts"
+        ],
+        answer: 3
+      },
+      {
+        question: "What does Conrad warn against at the end of the introduction?",
+        options: [
+          "Using technology in research",
+          "Studying local contexts",
+          "Treating global history as the only valid approach",
+          "Ignoring global processes"
+        ],
+        answer: 2
+      },
+      {
+        question: "What does global history aim to challenge?",
+        options: [
+          "The study of global trade",
+          "The focus on migration",
+          "Quantitative research",
+          "National and container-based approaches"
+        ],
+        answer: 3
+      },
+
+      // ----- SA test 2 (공간/네트워크 등) -----
+      {
+        question: "According to the chapter, what does the concept of 'network' highlight?",
+        options: [
+          "The superiority of nation-states",
+          "Isolation of empires from each other",
+          "The decline of communication in the modern era",
+          "Connections and interdependence between nodes beyond national borders"
+        ],
+        answer: 3
+      },
+      {
+        question: "What example illustrates how oceans can be viewed as transnational spaces?",
+        options: [
+          "The study of mountain regions",
+          "The isolation of continents by water barriers",
+          "The Atlantic and Indian Oceans enabling exchange across empires",
+          "The focus on local river systems"
+        ],
+        answer: 2
+      },
+      {
+        question: "What is the main goal of global historians regarding spatial frameworks?",
+        options: [
+          "To concentrate on local history exclusively",
+          "To focus only on European history",
+          "To move beyond national and fixed territorial units",
+          "To emphasize traditional boundaries like empires and civilizations"
+        ],
+        answer: 2
+      },
+      {
+        question: "What is the overall argument about spatial units in global history?",
+        options: [
+          "Global studies must always cover the entire planet",
+          "No single unit (local, national, global) is inherently superior; each reveals different processes",
+          "Micro-history is incompatible with global history",
+          "The nation-state should remain the main focus"
+        ],
+        answer: 1
+      },
+      {
+        question: "What warning does Conrad give about using the term 'network'?",
+        options: [
+          "It must not obscure structural inequalities and power relations",
+          "It is the best tool for all historical analyses",
+          "It should replace all spatial categories",
+          "It has a fixed and universal meaning"
+        ],
+        answer: 0
+      },
+      {
+        question: "What is Gregory Cushman’s global history of guano mainly about?",
+        options: [
+          "Local farming in Peru",
+          "Environmental movements in Europe",
+          "The slave trade in the Atlantic",
+          "Following a commodity through global trade networks"
+        ],
+        answer: 3
+      },
+      {
+        question: "What do 'micro-histories of the global' focus on?",
+        options: [
+          "Institutional histories of empires only",
+          "Quantitative data at the global level",
+          "Local or individual cases within broader global contexts",
+          "Abstract theories of globalization"
+        ],
+        answer: 2
+      },
+      {
+        question: "Which historical approach does George Marcus’s concept of 'following' inspire?",
+        options: [
+          "Studying only fixed national archives",
+          "Limiting research to state institutions",
+          "Tracking people, things, and ideas across boundaries",
+          "Ignoring global connections"
+        ],
+        answer: 2
+      },
+      {
+        question: "What does the 'spatial turn' in history emphasize?",
+        options: [
+          "Theoretical rehabilitation of space as an analytical category",
+          "Ignoring connections between regions",
+          "The focus on temporal rather than spatial aspects",
+          "A rejection of geography in historical analysis"
+        ],
+        answer: 0
+      },
+      {
+        question: "What is the key idea behind 'shifting scales' in global history?",
+        options: [
+          "Changing levels of analysis to connect local, national, and global perspectives",
+          "Ignoring individual experiences",
+          "Preferring the global over the local",
+          "Focusing on only one unit of study"
+        ],
+        answer: 0
+      },
+
+      // ----- Sami Modiano / Holocaust -----
+      {
+        question: "What was Sami Modiano’s dream as a child before the persecution?",
+        options: [
+          "To become a soldier in the Italian army",
+          "To become a teacher like his father",
+          "To be a professional football player",
+          "To study in Greece"
+        ],
+        answer: 1
+      },
+      {
+        question: "What was Modiano’s first reaction after liberation?",
+        options: [
+          "He joined the army to take revenge on the Nazis",
+          "He felt lost and empty, unable to understand how to start living again",
+          "He immediately returned to Rhodes to rebuild his home",
+          "He became a teacher in Poland"
+        ],
+        answer: 1
+      },
+      {
+        question: "What tragic event marked Sami Modiano’s arrival at Auschwitz?",
+        options: [
+          "His transfer to a labor camp in France",
+          "The separation from and death of his father and sister",
+          "His reunion with friends from Rhodes",
+          "His immediate assignment as a camp guard"
+        ],
+        answer: 1
+      },
+      {
+        question: "Who was with Sami Modiano during the deportation?",
+        options: [
+          "No family members",
+          "Only his mother",
+          "His uncle and cousins",
+          "His father and sister"
+        ],
+        answer: 3
+      },
+      {
+        question: "How did Modiano survive his first months in Auschwitz?",
+        options: [
+          "By hiding in barracks and avoiding work",
+          "By being transferred to an Italian section of the camp",
+          "By being assigned to lighter work thanks to his youth",
+          "By bribing the guards"
+        ],
+        answer: 2
+      },
+      {
+        question: "What is Sami Modiano’s main message as a witness today?",
+        options: [
+          "To rebuild Jewish life in Rhodes",
+          "To remember and educate future generations about the Holocaust",
+          "To encourage revenge and punishment for Nazis",
+          "To avoid speaking about his past to protect others"
+        ],
+        answer: 1
+      },
+      {
+        question: "What happened to the Jewish community of Rhodes in July 1944?",
+        options: [
+          "They were given Italian citizenship again",
+          "They were liberated by the British army",
+          "They were deported by the Germans to Auschwitz",
+          "They were evacuated to Turkey for safety"
+        ],
+        answer: 2
+      },
+      {
+        question: "How did Sami Modiano regain freedom?",
+        options: [
+          "He escaped from a train with other prisoners",
+          "He was rescued by partisans from Rhodes",
+          "He was liberated by Allied troops in 1945",
+          "He was exchanged as a prisoner of war"
+        ],
+        answer: 2
+      },
+      {
+        question: "What happened during the death marches in January 1945?",
+        options: [
+          "Prisoners were forced to walk long distances in freezing conditions",
+          "Prisoners were sent by train to Switzerland",
+          "The Red Army liberated Auschwitz before the marches began",
+          "The Germans abandoned the camps peacefully"
+        ],
+        answer: 0
+      },
+      {
+        question: "How did the racial laws of 1938 affect Sami Modiano’s life?",
+        options: [
+          "He was forced to work for the German army",
+          "He joined the Italian army at a young age",
+          "He was expelled from school because he was Jewish",
+          "He had to move from Rhodes to mainland Italy"
+        ],
+        answer: 2
+      },
+      {
+        question: "What kind of family did Sami Modiano grow up in?",
+        options: [
+          "A mixed Greek-Turkish merchant family",
+          "A wealthy Christian family with business in Turkey",
+          "An Italian military family stationed in Rhodes",
+          "A close-knit Jewish family integrated into the local community"
+        ],
+        answer: 3
+      },
+      {
+        question: "Where was Modiano taken after leaving Auschwitz?",
+        options: [
+          "To a refugee camp in Switzerland",
+          "Back to Rhodes under German control",
+          "To a hospital in Germany",
+          "To the Mittelbau-Dora and Bergen-Belsen camps"
+        ],
+        answer: 3
+      },
+      {
+        question: "What role did solidarity play in Sami Modiano’s survival?",
+        options: [
+          "It had no influence; he survived by luck alone",
+          "It gave him hope and practical help from other prisoners",
+          "It made him vulnerable to betrayal",
+          "It was discouraged and punished by prisoners themselves"
+        ],
+        answer: 1
+      },
+
+      // ----- Global Medievalism / Medievalism -----
+      {
+        question: "What role does popular culture play in medievalism?",
+        options: [
+          "It has no influence on public understanding of history",
+          "It shapes what audiences “know” about the Middle Ages and spreads ideological narratives",
+          "It only entertains without any cultural impact",
+          "It replaces academic research in medieval studies"
+        ],
+        answer: 1
+      },
+      {
+        question: "What does Geraldine Heng’s concept of the “global Middle Ages” seek to do?",
+        options: [
+          "Focus only on medieval Western texts",
+          "Reinforce Europe as the cultural centre of the world",
+          "Limit study to political history",
+          "Decentre Europe and disrupt colonial spatio-temporal narratives"
+        ],
+        answer: 3
+      },
+      {
+        question: "According to the authors, why is the traditional vision of the Middle Ages problematic?",
+        options: [
+          "It promotes cultural diversity and inclusiveness",
+          "It supports white, Eurocentric, and patriarchal ideologies",
+          "It encourages critical reflection on race and colonialism",
+          "It equally represents all global perspectives"
+        ],
+        answer: 1
+      },
+      {
+        question: "What are the three types of medievalism identified by Candace Barrington?",
+        options: [
+          "Political, cultural, and economic",
+          "Spatial, temporal, and linguistic",
+          "Imperial, colonial, and postcolonial",
+          "Religious, literary, and artistic"
+        ],
+        answer: 1
+      },
+      {
+        question: "What is meant by the term “medievalism” in this text?",
+        options: [
+          "The preservation of medieval architecture",
+          "The reimagining and repurposing of the Middle Ages in modern contexts",
+          "The strict academic study of medieval history",
+          "A political movement for medieval heritage"
+        ],
+        answer: 1
+      },
+      {
+        question: "What is the main goal of \"Global Medievalism\" according to Young and Finn?",
+        options: [
+          "To revive traditional nationalism in medieval narratives",
+          "To focus exclusively on Western fantasy literature",
+          "To deconstruct Eurocentric views of the Middle Ages and offer alternative global perspectives",
+          "To promote European cultural superiority in medieval studies"
+        ],
+        answer: 2
+      },
+      {
+        question: "What does the concept of “mobilities” reveal in global medievalism?",
+        options: [
+          "How only trade routes shaped the medieval economy",
+          "How movement of people, objects, and ideas reflects power relations",
+          "How medieval transport systems functioned",
+          "How mobility destroys cultural identity"
+        ],
+        answer: 1
+      },
+      {
+        question: "How do the authors define “global medievalism”?",
+        options: [
+          "As nostalgia for the Middle Ages",
+          "As a marketing strategy for fantasy media",
+          "As a process of storytelling that resists colonialist and racist versions of the medieval past",
+          "As an exclusive study of European medieval culture"
+        ],
+        answer: 2
+      },
+      {
+        question: "What is “spatial medievalism”?",
+        options: [
+          "When stories take place in fictional medieval settings",
+          "When global trade routes are studied",
+          "When settler colonies adopt the Middle Ages as part of their national heritage",
+          "When medieval studies focus on geography"
+        ],
+        answer: 2
+      },
+      {
+        question: "What is “temporal medievalism” according to Young and Finn?",
+        options: [
+          "When time travel connects the medieval and the modern",
+          "When medieval stories are adapted for films and television",
+          "When only European languages are studied",
+          "When non-Western peoples are positioned as “medieval” and uncivilised by Western standards"
+        ],
+        answer: 3
+      },
+
+      // ----- Nuclear energy / nuclear history -----
+      {
+        question: "What was a major challenge to nuclear power in developing countries?",
+        options: [
+          "High costs, safety risks, and dependence on subsidies",
+          "Weak demand for electricity",
+          "Excess international funding",
+          "Abundance of domestic uranium"
+        ],
+        answer: 0
+      },
+      {
+        question: "Which international body regulates nuclear safety and cooperation?",
+        options: [
+          "NATO",
+          "The European Economic Community",
+          "The International Atomic Energy Agency (IAEA)",
+          "The World Bank"
+        ],
+        answer: 2
+      },
+      {
+        question: "What was one of the main contradictions of nuclear energy in the 20th century?",
+        options: [
+          "It was immediately banned by international law",
+          "It was universally opposed after World War II",
+          "It was used only for peaceful energy production",
+          "It symbolized both the hope for unlimited energy and the fear of global annihilation"
+        ],
+        answer: 3
+      },
+      {
+        question: "What role did EURATOM play in postwar Europe?",
+        options: [
+          "It replaced NATO’s military functions",
+          "It coordinated European nuclear research and symbolized scientific integration",
+          "It banned nuclear research within the EU",
+          "It regulated all global uranium trade"
+        ],
+        answer: 1
+      },
+      {
+        question: "What did the Atoms for Peace program aim to achieve?",
+        options: [
+          "Promote international cooperation in the peaceful uses of nuclear energy",
+          "Limit nuclear technology only to military applications",
+          "Prevent scientific exchanges between East and West",
+          "End the Cold War nuclear arms race"
+        ],
+        answer: 0
+      },
+      {
+        question: "How did developing countries view nuclear power during the 1950s–60s?",
+        options: [
+          "As an outdated industrial technology",
+          "As an unnecessary Western import",
+          "As a path to modernization and technological independence",
+          "As a tool of imperial domination"
+        ],
+        answer: 2
+      },
+      {
+        question: "What led to the decline of nuclear enthusiasm in Western Europe during the 1970s?",
+        options: [
+          "A global shortage of uranium",
+          "The privatization of nuclear industries",
+          "Anti-nuclear movements, environmental concerns, and critiques of modern growth",
+          "The end of the Cold War"
+        ],
+        answer: 2
+      },
+      {
+        question: "What was the impact of the Chernobyl and Fukushima disasters?",
+        options: [
+          "They reignited public debate and skepticism about nuclear energy",
+          "They increased investment in nuclear power in Europe",
+          "They proved nuclear technology to be completely safe",
+          "They had no influence on global nuclear policy"
+        ],
+        answer: 0
+      },
+      {
+        question: "What does the concept of \"nuclear renaissance\" refer to?",
+        options: [
+          "The military buildup during the Cold War",
+          "The invention of nuclear energy in the 1940s",
+          "Renewed interest in nuclear energy after a period of stagnation",
+          "The total replacement of fossil fuels"
+        ],
+        answer: 2
+      },
+      {
+        question: "Why was Italy’s nuclear experience considered unique?",
+        options: [
+          "It was among the first to build and then abandon nuclear energy programs",
+          "It never developed any nuclear research capacity",
+          "It used only imported nuclear technology",
+          "It fully nationalized its nuclear sector from the start"
+        ],
+        answer: 0
+      },
+
+      // ----- Ghobrial / Microhistory / Global history -----
+      {
+        question: "According to Ghobrial, what is one main goal of global history?",
+        options: [
+          "To place historical events and processes in a global context.",
+          "To study only local traditions.",
+          "To ignore transnational connections."
+        ],
+        answer: 0
+      },
+      {
+        question: "What does microhistory focus on?",
+        options: [
+          "Quantitative data only.",
+          "Broad overviews of world systems.",
+          "Detailed study of small-scale events or individuals."
+        ],
+        answer: 2
+      },
+      {
+        question: "Which historian argued that “the hegemony of national historiography is over”?",
+        options: [
+          "Patrick O’Brien",
+          "David Armitage",
+          "Roger Chartier"
+        ],
+        answer: 1
+      },
+      {
+        question: "What is one criticism Ghobrial notes about global history?",
+        options: [
+          "It ignores global connections completely.",
+          "It sometimes neglects place-based knowledge.",
+          "It pays too much attention to local archives."
+        ],
+        answer: 1
+      },
+      {
+        question: "How does microhistory complement global history?",
+        options: [
+          "By focusing only on statistics.",
+          "By providing depth through detailed case studies.",
+          "By replacing global approaches entirely."
+        ],
+        answer: 1
+      },
+      {
+        question: "What did Carlo Ginzburg compare microhistory to?",
+        options: [
+          "Telling myths about ancient heroes.",
+          "Using a microscope to study history.",
+          "Writing novels instead of history."
+        ],
+        answer: 1
+      },
+      {
+        question: "What is one shared concern among global historians?",
+        options: [
+          "Avoiding Eurocentrism.",
+          "Rejecting non-European scholarship.",
+          "Focusing only on Western Europe."
+        ],
+        answer: 0
+      },
+      {
+        question: "What danger did Sebastian Conrad warn against in global history?",
+        options: [
+          "Too much focus on economic data.",
+          "An obsession with mobility and movement.",
+          "A lack of interest in digital archives."
+        ],
+        answer: 1
+      },
+      {
+        question: "What does Ghobrial suggest about combining global and microhistory?",
+        options: [
+          "It can make history more reflexive and critical.",
+          "It simplifies all historical debates.",
+          "It eliminates the need for theory."
+        ],
+        answer: 0
+      },
+      {
+        question: "What does the term “global microhistory” mean?",
+        options: [
+          "A detailed study that reveals global connections through small cases.",
+          "A purely statistical approach to world systems.",
+          "A focus only on national archives."
+        ],
+        answer: 0
+      },
+
+      // ----- Rublack / Protestant Empires -----
+      {
+        question: "According to Ulinka Rublack, what is the main goal of \"Protestant Empires\"?",
+        options: [
+          "To propose a global, multi-centric understanding of the Protestant Reformations.",
+          "To focus exclusively on the European confessional states.",
+          "To analyze the Catholic Reformation in depth."
+        ],
+        answer: 0
+      },
+      {
+        question: "What was the key idea behind the \"confessionalization paradigm\"?",
+        options: [
+          "That European confessions shaped states through social discipline.",
+          "That Protestantism declined due to secularization.",
+          "That global missions were the main factor in early modern religion."
+        ],
+        answer: 0
+      },
+      {
+        question: "Which historian wrote \"Women on the Margins\" (1995), linking global travel and religion?",
+        options: [
+          "Lee Palmer Wandel.",
+          "Natalie Zemon Davis.",
+          "Diarmaid MacCulloch."
+        ],
+        answer: 1
+      },
+      {
+        question: "What did Merry Wiesner-Hanks’s \"Christianity and Sexuality in the Early Modern World\" highlight?",
+        options: [
+          "The rise of atheism in colonial societies.",
+          "The regulation of sexual and marital life by Christianity worldwide.",
+          "The decline of Catholic influence in Europe."
+        ],
+        answer: 1
+      },
+      {
+        question: "What did Jorge Cañizares-Esguerra argue in \"Puritan Conquistadors\"?",
+        options: [
+          "That Puritan missions were entirely peaceful.",
+          "That British Protestant expansion shared features with Iberian Catholic conquest.",
+          "That Protestantism rejected all colonial ideologies."
+        ],
+        answer: 1
+      },
+      {
+        question: "What did Carla Gardina Pestana emphasize in \"Protestant Empire\"?",
+        options: [
+          "The superiority of European Christianity.",
+          "The mutual transformation of religions through Atlantic encounters.",
+          "The failure of Protestant colonial missions."
+        ],
+        answer: 1
+      },
+      {
+        question: "What was the significance of Jacobus Eliza Joannes Capitein’s work in Ghana?",
+        options: [
+          "He founded the Dutch West India Company.",
+          "He translated Christian texts into local languages and questioned slavery.",
+          "He became the first Protestant bishop of South Africa."
+        ],
+        answer: 1
+      },
+      {
+        question: "What did Charles Parker note about Protestant missions in the Dutch Empire?",
+        options: [
+          "They focused only on Europe.",
+          "They were more extensive and intellectually engaged than once thought.",
+          "They were nonexistent and unorganized."
+        ],
+        answer: 1
+      },
+      {
+        question: "What central question does Rublack raise for global Protestant history?",
+        options: [
+          "How ideas and practices were translated and adapted across cultures.",
+          "How Protestantism disappeared after 1700.",
+          "How the papacy influenced Protestant states."
+        ],
+        answer: 0
+      },
+      {
+        question: "How does \"Protestant Empires\" differ from traditional Reformation history?",
+        options: [
+          "It avoids discussing material and visual culture.",
+          "It concentrates only on theological debates in Germany.",
+          "It includes encounters in Asia, Africa, and the Americas, not just Europe."
+        ],
+        answer: 2
+      }
+    ];
+    // ===== 문제은행 끝 =====
+
+    // 배열 섞기 (Fisher-Yates)
+    function shuffle(array) {
+      const arr = array.slice();
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    let questions = shuffle(QUESTION_BANK);
+    let currentIndex = 0;
+    let answered = false;
+    let score = 0;
+
+    const questionText = document.getElementById("question-text");
+    const optionsDiv = document.getElementById("options");
+    const feedbackDiv = document.getElementById("feedback");
+    const progressDiv = document.getElementById("progress");
+    const nextBtn = document.getElementById("next-btn");
+    const restartBtn = document.getElementById("restart-btn");
+
+    function renderQuestion() {
+      answered = false;
+      feedbackDiv.textContent = "";
+      feedbackDiv.className = "";
+      optionsDiv.innerHTML = "";
+
+      const q = questions[currentIndex];
+      questionText.textContent = q.question;
+      progressDiv.textContent = `문제 ${currentIndex + 1} / ${questions.length}`;
+
+      q.options.forEach((opt, idx) => {
+        const btn = document.createElement("button");
+        btn.className = "option-btn";
+        btn.textContent = opt;
+        btn.onclick = () => handleAnswer(idx, btn);
+        optionsDiv.appendChild(btn);
+      });
+
+      nextBtn.disabled = true;
+    }
+
+    function handleAnswer(selectedIndex, clickedBtn) {
+      if (answered) return;
+      answered = true;
+      const q = questions[currentIndex];
+      const optionButtons = document.querySelectorAll(".option-btn");
+
+      optionButtons.forEach((btn, idx) => {
+        btn.classList.add("disabled");
+        if (idx === q.answer) {
+          btn.classList.add("correct");
+        }
+      });
+
+      if (selectedIndex === q.answer) {
+        feedbackDiv.textContent = "정답입니다 ✅";
+        feedbackDiv.className = "correct";
+        clickedBtn.classList.add("correct");
+        score++;
+      } else {
+        feedbackDiv.textContent = `오답입니다 ❌  (정답: ${q.options[q.answer]})`;
+        feedbackDiv.className = "wrong";
+        clickedBtn.classList.add("wrong");
+      }
+
+      nextBtn.disabled = false;
+    }
+
+    function nextQuestion() {
+      if (currentIndex < questions.length - 1) {
+        currentIndex++;
+        renderQuestion();
+      } else {
+        questionText.textContent = "모든 문제를 다 풀었습니다.";
+        optionsDiv.innerHTML = "";
+        feedbackDiv.textContent = `점수: ${score} / ${questions.length}`;
+        feedbackDiv.className = score === questions.length ? "correct" : "";
+        progressDiv.textContent = "";
+        nextBtn.style.display = "none";
+        restartBtn.style.display = "inline-block";
+      }
+    }
+
+    function restart() {
+      questions = shuffle(QUESTION_BANK);
+      currentIndex = 0;
+      score = 0;
+      nextBtn.style.display = "inline-block";
+      restartBtn.style.display = "none";
+      renderQuestion();
+    }
+
+    nextBtn.addEventListener("click", nextQuestion);
+    restartBtn.addEventListener("click", restart);
+
+    // 첫 문제 표시
+    renderQuestion();
+  </script>
+</body>
+</html>
